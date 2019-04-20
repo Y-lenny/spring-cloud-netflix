@@ -16,15 +16,9 @@
 
 package org.springframework.cloud.netflix.eureka;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
 import com.netflix.appinfo.DataCenterInfo;
 import com.netflix.appinfo.InstanceInfo.InstanceStatus;
 import com.netflix.appinfo.MyDataCenterInfo;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.commons.util.InetUtils;
 import org.springframework.cloud.commons.util.InetUtils.HostInfo;
@@ -32,11 +26,18 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
 /**
  * @author Dave Syer
  * @author Spencer Gibb
  * @author Ryan Baxter
  * @author Gregor Zurowski
+ * 此类用来封装应用实例的参数，通过动态配置方式实现的；Eureka本身提供了一个静态常量形式封装
+ * @see com.netflix.appinfo.AbstractInstanceConfig 及其子类
  */
 @ConfigurationProperties("eureka.instance")
 public class EurekaInstanceConfigBean
@@ -279,10 +280,6 @@ public class EurekaInstanceConfigBean
 
 	private Environment environment;
 
-	public String getHostname() {
-		return getHostName(false);
-	}
-
 	@SuppressWarnings("unused")
 	private EurekaInstanceConfigBean() {
 	}
@@ -294,6 +291,15 @@ public class EurekaInstanceConfigBean
 		this.hostname = this.hostInfo.getHostname();
 	}
 
+	public String getHostname() {
+		return getHostName(false);
+	}
+
+	public void setHostname(String hostname) {
+		this.hostname = hostname;
+		this.hostInfo.override = true;
+	}
+
 	@Override
 	public String getInstanceId() {
 		if (this.instanceId == null && this.metadataMap != null) {
@@ -302,19 +308,13 @@ public class EurekaInstanceConfigBean
 		return this.instanceId;
 	}
 
+	public void setInstanceId(String instanceId) {
+		this.instanceId = instanceId;
+	}
+
 	@Override
 	public boolean getSecurePortEnabled() {
 		return this.securePortEnabled;
-	}
-
-	public void setHostname(String hostname) {
-		this.hostname = hostname;
-		this.hostInfo.override = true;
-	}
-
-	public void setIpAddress(String ipAddress) {
-		this.ipAddress = ipAddress;
-		this.hostInfo.override = true;
 	}
 
 	@Override
@@ -324,20 +324,6 @@ public class EurekaInstanceConfigBean
 			this.hostname = this.hostInfo.getHostname();
 		}
 		return this.preferIpAddress ? this.ipAddress : this.hostname;
-	}
-
-	@Override
-	public void setEnvironment(Environment environment) {
-		this.environment = environment;
-		// set some defaults from the environment, but allow the defaults to use relaxed
-		// binding
-		String springAppName = this.environment.getProperty("spring.application.name",
-				"");
-		if (StringUtils.hasText(springAppName)) {
-			setAppname(springAppName);
-			setVirtualHostName(springAppName);
-			setSecureVirtualHostName(springAppName);
-		}
 	}
 
 	private HostInfo getHostInfo() {
@@ -437,10 +423,6 @@ public class EurekaInstanceConfigBean
 		this.virtualHostName = virtualHostName;
 	}
 
-	public void setInstanceId(String instanceId) {
-		this.instanceId = instanceId;
-	}
-
 	public String getSecureVirtualHostName() {
 		return secureVirtualHostName;
 	}
@@ -475,6 +457,11 @@ public class EurekaInstanceConfigBean
 
 	public String getIpAddress() {
 		return ipAddress;
+	}
+
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+		this.hostInfo.override = true;
 	}
 
 	public String getStatusPageUrlPath() {
@@ -567,6 +554,20 @@ public class EurekaInstanceConfigBean
 
 	public Environment getEnvironment() {
 		return environment;
+	}
+
+	@Override
+	public void setEnvironment(Environment environment) {
+		this.environment = environment;
+		// set some defaults from the environment, but allow the defaults to use relaxed
+		// binding
+		String springAppName = this.environment.getProperty("spring.application.name",
+				"");
+		if (StringUtils.hasText(springAppName)) {
+			setAppname(springAppName);
+			setVirtualHostName(springAppName);
+			setSecureVirtualHostName(springAppName);
+		}
 	}
 
 	@Override
